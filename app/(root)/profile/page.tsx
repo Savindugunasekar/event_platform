@@ -1,6 +1,8 @@
 import Collection from "@/components/shared/Collection";
 import { Button } from "@/components/ui/Button";
 import { getEventsByUser } from "@/lib/actions/event.actions";
+import { getOrdersByUser } from "@/lib/actions/order.actions";
+import { IOrder } from "@/lib/database/models/order.model";
 import { SearchParamProps } from "@/types";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
@@ -12,8 +14,13 @@ const ProfilePage = async({searchParams}:SearchParamProps) => {
     const {sessionClaims} = auth();
 
     const userId = sessionClaims?.userId as string
+    const ordersPage = Number(searchParams?.ordersPage) || 1;
 
     const eventsPage = Number(searchParams?.eventsPage) || 1;
+
+    const orders = await getOrdersByUser({userId,page:1})
+
+    const orderedEvents = orders?.data.map((order: IOrder) => order.event) || [];
 
     const organizedEvents = await getEventsByUser({
         userId,page:eventsPage
@@ -32,18 +39,18 @@ const ProfilePage = async({searchParams}:SearchParamProps) => {
         </div>
       </section>
 
-      {/* <section className="wrapper my-8">
+      <section className="wrapper my-8">
         <Collection
-          data={events?.data}
+          data={orderedEvents}
           emptyTitle="No event tickets purchased yet "
           emptyStateSubtext="Plenty of exciting events to explore!"
           collectionType="My_Tickets"
           limit={3}
-          page={1}
-          totalPages={2}
+          page={ordersPage}
+          totalPages={orders?.totalPages}
           urlParamName="ordersPage"
         />
-      </section> */}
+      </section>
 
       {/* Events Organized by me */}
 
